@@ -15,7 +15,14 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
   onConfidenceChange,
   isLoading,
 }) => {
-  if (isLoading || !bufferData) {
+  // Local state for smooth drag without premature refetches
+  const [localPct, setLocalPct] = React.useState<number>(Math.round(confidence * 100));
+
+  React.useEffect(() => {
+    setLocalPct(Math.round(confidence * 100));
+  }, [confidence]);
+
+  if (!bufferData) {
     return (
       <div className="card decision-banner">
         <div className="state-box" style={{ padding: "32px 0" }}>
@@ -26,7 +33,16 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
     );
   }
 
-  const confPct = Math.round(confidence * 100);
+  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalPct(Number(e.target.value));
+  };
+
+  const commitConfidence = () => {
+    const newConf = localPct / 100.0;
+    if (newConf !== confidence) {
+      onConfidenceChange(newConf);
+    }
+  };
 
   return (
     <div className="card decision-banner">
@@ -35,17 +51,27 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
         <div className="buffer-badge">
           <ShieldCheck size={14} />
           <span>Decision Support | Day-Ahead Procurement</span>
+          {isLoading && (
+            <span
+              className="spinner"
+              style={{ width: 12, height: 12, borderWidth: 2, marginLeft: 8, display: "inline-block" }}
+              title="Updating buffer..."
+            />
+          )}
         </div>
-        <div className="buffer-value-row">
+        <div
+          className="buffer-value-row"
+          style={{ opacity: isLoading ? 0.65 : 1, transition: "opacity 0.2s ease" }}
+        >
           <span className="buffer-mw-big num">
             {bufferData.recommended_buffer_mw.toLocaleString()}
           </span>
           <span className="buffer-unit">MW Safety Buffer</span>
         </div>
         <p className="buffer-explanation">
-          At <strong>{confPct}% confidence</strong>, procuring an additional{" "}
+          At <strong>{localPct}% confidence</strong>, procuring an additional{" "}
           <strong className="num">{bufferData.recommended_buffer_mw} MW</strong> of flexible power beyond the
-          day-ahead wind forecast covers <strong>{confPct}%</strong> of observed forecast deficit events.
+          day-ahead wind forecast covers <strong>{localPct}%</strong> of observed forecast deficit events.
         </p>
 
         <div style={{ display: "flex", gap: "16px", marginTop: "4px" }}>
@@ -65,7 +91,7 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
             <Sliders size={15} color="var(--accent-wind)" />
             <span className="slider-label">Coverage Confidence Level:</span>
           </div>
-          <span className="slider-val-badge num">{confPct}%</span>
+          <span className="slider-val-badge num">{localPct}%</span>
         </div>
 
         <input
@@ -73,8 +99,16 @@ export const DecisionBanner: React.FC<DecisionBannerProps> = ({
           min="80"
           max="99"
           step="1"
-          value={confPct}
-          onChange={(e) => onConfidenceChange(Number(e.target.value) / 100.0)}
+          value={localPct}
+          onChange={handleSliderChange}
+          onMouseUp={commitConfidence}
+          onTouchEnd={commitConfidence}
+          onPointerUp={commitConfidence}
+          onKeyUp={(e) => {
+            if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "PageUp", "PageDown"].includes(e.key)) {
+              commitConfidence();
+            }
+          }}
           className="range-slider"
           aria-label="Procurement safety buffer confidence slider"
         />

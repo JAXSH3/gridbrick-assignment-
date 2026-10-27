@@ -38,7 +38,7 @@ describe("DecisionBanner component", () => {
     expect(screen.getByText(/56.5%/i)).toBeInTheDocument();
   });
 
-  it("triggers confidence change on slider input", () => {
+  it("triggers confidence change on slider release", () => {
     const onConfChange = vi.fn();
     render(
       <DecisionBanner
@@ -50,6 +50,7 @@ describe("DecisionBanner component", () => {
 
     const slider = screen.getByRole("slider");
     fireEvent.change(slider, { target: { value: "95" } });
+    fireEvent.mouseUp(slider);
     expect(onConfChange).toHaveBeenCalledWith(0.95);
   });
 });

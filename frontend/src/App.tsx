@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { keepPreviousData, useQuery } from "@tanstack/react-query";
 import { Header } from "./components/Header";
 import { DecisionBanner } from "./components/DecisionBanner";
 import { MetricCards } from "./components/MetricCards";
@@ -42,6 +42,7 @@ export default function App() {
   const bufferQuery = useQuery({
     queryKey: ["buffer", confidence, cutoffTime],
     queryFn: () => fetchBufferRecommendation(confidence, "2026-01-01", "2026-01-31", cutoffTime),
+    placeholderData: keepPreviousData,
   });
 
   const horizonQuery = useQuery({
