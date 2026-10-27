@@ -1,0 +1,14 @@
+services:
+  - type: web
+    name: uk-wind-procurement-backend
+    runtime: docker
+    dockerfilePath: backend/Dockerfile
+    dockerContext: backend
+    plan: free
+    region: frankfurt
+    envVars:
+      - key: DEFAULT_CUTOFF_TIME
+        value: "09:00"
+      - key: CORS_ORIGINS
+        value: '["*"]'
+    healthCheckPath: /health
