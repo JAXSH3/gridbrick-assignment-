@@ -26,6 +26,11 @@ HORIZON_BUCKET_EDGES = [
 ]
 
 
+def format_utc_iso(dt: datetime) -> str:
+    """Format an aware UTC datetime to ISO-8601 string with Z suffix."""
+    return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def parse_time_string(time_str: str) -> time:
     """Parse 'HH:MM' string into a datetime.time object."""
     parts = time_str.strip().split(":")
