@@ -62,3 +62,15 @@ def root_health() -> dict[str, str]:
 def root_redirect() -> RedirectResponse:
     """Redirect root path to interactive OpenAPI documentation."""
     return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
+
+@app.get("/docs", include_in_schema=False)
+def root_docs_redirect() -> RedirectResponse:
+    """Redirect /docs to versioned OpenAPI documentation."""
+    return RedirectResponse(url=f"{settings.API_V1_STR}/docs")
+
+
+@app.get("/redoc", include_in_schema=False)
+def root_redoc_redirect() -> RedirectResponse:
+    """Redirect /redoc to versioned ReDoc documentation."""
+    return RedirectResponse(url=f"{settings.API_V1_STR}/redoc")

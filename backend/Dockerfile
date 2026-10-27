@@ -24,8 +24,9 @@ RUN pip install --no-cache-dir \
     "pandas>=2.2.0" \
     "numpy>=1.26.0"
 
-# Copy backend application code
+# Copy backend application code and seed database
 COPY app ./app
+COPY data ./data
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
