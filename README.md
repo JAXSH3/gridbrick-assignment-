@@ -1,6 +1,6 @@
 # UK Wind Day-Ahead Procurement Desk | Decision Support Platform
 
-[![CI](https://github.com/energy-analytics/uk-wind-procurement/actions/workflows/ci.yml/badge.svg)](https://github.com/energy-analytics/uk-wind-procurement/actions)
+[![CI](https://github.com/JAXSH3/gridbrick-assignment-/actions/workflows/ci.yml/badge.svg)](https://github.com/JAXSH3/gridbrick-assignment-/actions)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue.svg)](https://www.python.org/downloads/)
 [![React 18](https://img.shields.io/badge/react-18-61dafb.svg)](https://react.dev/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
@@ -150,8 +150,8 @@ Make sure Docker and Docker Compose are installed and running:
 
 ```bash
 # Clone the repository
-git clone https://github.com/energy-analytics/uk-wind-procurement.git
-cd uk-wind-procurement
+git clone https://github.com/JAXSH3/gridbrick-assignment-.git
+cd gridbrick-assignment-
 
 # Launch both backend and frontend services
 docker compose up --build
