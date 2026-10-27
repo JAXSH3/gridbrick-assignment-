@@ -1,10 +1,9 @@
 """Elexon BMRS data ingestion service with chunking, retry backoff, and quality profiling."""
 
 import asyncio
-from datetime import datetime, timedelta, timezone
 import logging
-import sqlite3
-import time
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
 from typing import Any
 
 import httpx
@@ -21,19 +20,24 @@ WINDFOR_STREAM_URL = f"{BMRS_BASE_URL}/datasets/WINDFOR/stream"
 
 def parse_utc_iso(dt_str: str) -> datetime:
     """Parse an ISO-8601 string into an aware UTC datetime."""
-    return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(timezone.utc)
+    return datetime.fromisoformat(dt_str.replace("Z", "+00:00")).astimezone(UTC)
 
 
 def format_utc_iso(dt: datetime) -> str:
     """Format aware datetime to ISO-8601 string with Z suffix."""
-    return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
 class ElexonIngestionService:
     """Ingests actual wind generation and forecasts from Elexon BMRS API."""
 
-    def __init__(self, db_path: str | None = None) -> None:
-        self.db_path = db_path or settings.DATABASE_PATH
+    def __init__(self, db_path: Path | str | None = None) -> None:
+        if db_path is None:
+            self.db_path: Path = settings.DATABASE_PATH
+        elif isinstance(db_path, str):
+            self.db_path = Path(db_path)
+        else:
+            self.db_path = db_path
         init_db(self.db_path)
 
     async def fetch_json_stream_with_retry(
@@ -63,7 +67,9 @@ class ElexonIngestionService:
                     response.text[:200],
                 )
             except (httpx.RequestError, httpx.TimeoutException) as exc:
-                logger.warning("Attempt %d/%d failed with network error: %s", attempt, max_retries, exc)
+                logger.warning(
+                    "Attempt %d/%d failed with network error: %s", attempt, max_retries, exc
+                )
 
             if attempt < max_retries:
                 await asyncio.sleep(delay)
@@ -131,7 +137,11 @@ class ElexonIngestionService:
                         )
                         conn.commit()
                     total_rows += len(rows_to_insert)
-                    logger.info("Inserted %d actual wind records (total %d)", len(rows_to_insert), total_rows)
+                    logger.info(
+                        "Inserted %d actual wind records (total %d)",
+                        len(rows_to_insert),
+                        total_rows,
+                    )
 
                 current_start = current_end
                 await asyncio.sleep(0.2)
@@ -160,7 +170,9 @@ class ElexonIngestionService:
                     "publishDateTimeFrom": format_utc_iso(current_start),
                     "publishDateTimeTo": format_utc_iso(current_end),
                 }
-                records = await self.fetch_json_stream_with_retry(client, WINDFOR_STREAM_URL, params)
+                records = await self.fetch_json_stream_with_retry(
+                    client, WINDFOR_STREAM_URL, params
+                )
 
                 rows_to_insert = []
                 for r in records:
@@ -196,7 +208,9 @@ class ElexonIngestionService:
                         )
                         conn.commit()
                     total_rows += len(rows_to_insert)
-                    logger.info("Inserted %d forecast records (total %d)", len(rows_to_insert), total_rows)
+                    logger.info(
+                        "Inserted %d forecast records (total %d)", len(rows_to_insert), total_rows
+                    )
 
                 current_start = current_end
                 await asyncio.sleep(0.2)
@@ -255,8 +269,8 @@ class ElexonIngestionService:
             missing_slots: list[str] = []
             if jan_actuals:
                 existing_stamps = {row["startTime"] for row in jan_actuals}
-                cur_dt = datetime(2026, 1, 1, 0, 0, 0, tzinfo=timezone.utc)
-                end_dt = datetime(2026, 1, 31, 23, 30, 0, tzinfo=timezone.utc)
+                cur_dt = datetime(2026, 1, 1, 0, 0, 0, tzinfo=UTC)
+                end_dt = datetime(2026, 1, 31, 23, 30, 0, tzinfo=UTC)
                 while cur_dt <= end_dt:
                     iso = format_utc_iso(cur_dt)
                     if iso not in existing_stamps:
@@ -272,16 +286,32 @@ class ElexonIngestionService:
                 else 0,
                 "missing_actual_slots": missing_slots,
                 "negative_actuals_count": negative_actuals,
-                "actual_min_mw": round(actual_gen_stats[0], 1) if actual_gen_stats[0] is not None else None,
-                "actual_max_mw": round(actual_gen_stats[1], 1) if actual_gen_stats[1] is not None else None,
-                "actual_avg_mw": round(actual_gen_stats[2], 1) if actual_gen_stats[2] is not None else None,
+                "actual_min_mw": round(actual_gen_stats[0], 1)
+                if actual_gen_stats[0] is not None
+                else None,
+                "actual_max_mw": round(actual_gen_stats[1], 1)
+                if actual_gen_stats[1] is not None
+                else None,
+                "actual_avg_mw": round(actual_gen_stats[2], 1)
+                if actual_gen_stats[2] is not None
+                else None,
                 "total_forecasts_rows": forecasts_count,
                 "jan_forecast_distinct_slots": jan_fc_target_slots,
-                "forecast_min_mw": round(forecast_gen_stats[0], 1) if forecast_gen_stats[0] is not None else None,
-                "forecast_max_mw": round(forecast_gen_stats[1], 1) if forecast_gen_stats[1] is not None else None,
-                "forecast_avg_mw": round(forecast_gen_stats[2], 1) if forecast_gen_stats[2] is not None else None,
-                "min_horizon_hours": round(forecast_gen_stats[3], 2) if forecast_gen_stats[3] is not None else None,
-                "max_horizon_hours": round(forecast_gen_stats[4], 2) if forecast_gen_stats[4] is not None else None,
+                "forecast_min_mw": round(forecast_gen_stats[0], 1)
+                if forecast_gen_stats[0] is not None
+                else None,
+                "forecast_max_mw": round(forecast_gen_stats[1], 1)
+                if forecast_gen_stats[1] is not None
+                else None,
+                "forecast_avg_mw": round(forecast_gen_stats[2], 1)
+                if forecast_gen_stats[2] is not None
+                else None,
+                "min_horizon_hours": round(forecast_gen_stats[3], 2)
+                if forecast_gen_stats[3] is not None
+                else None,
+                "max_horizon_hours": round(forecast_gen_stats[4], 2)
+                if forecast_gen_stats[4] is not None
+                else None,
                 "negative_horizons_count": negative_horizons,
                 "negative_forecast_gen_count": negative_forecast_gen,
             }
