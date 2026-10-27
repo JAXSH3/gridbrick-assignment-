@@ -6,8 +6,8 @@
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> **Live Deployment Demo**: [https://uk-wind-procurement-demo.vercel.app](https://uk-wind-procurement-demo.vercel.app) *(Placeholder)*  
-> **Backend API Docs**: [https://uk-wind-backend.onrender.com/api/v1/docs](https://uk-wind-backend.onrender.com/api/v1/docs) *(Placeholder)*  
+> **Live Deployment Demo**: [https://gridbrick-assignment.vercel.app](https://gridbrick-assignment.vercel.app)  
+> **Backend API Docs**: [https://uk-wind-procurement-backend.onrender.com/api/v1/docs](https://uk-wind-procurement-backend.onrender.com/api/v1/docs)  
 > **Video Walkthroughs**: [5-Min Customer Pitch](docs/demo_customer_pitch.md) | [5-Min Technical Walkthrough](docs/demo_technical_walkthrough.md)
 
 ---
